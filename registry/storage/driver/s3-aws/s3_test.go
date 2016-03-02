@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -16,6 +17,11 @@ import (
 	"gopkg.in/check.v1"
 )
 
+const (
+	backend     = "aws"
+	endpointURL = ""
+)
+
 // Hook up gocheck into the "go test" runner.
 func Test(t *testing.T) { check.TestingT(t) }
 
@@ -29,6 +35,7 @@ func init() {
 	encrypt := os.Getenv("S3_ENCRYPT")
 	secure := os.Getenv("S3_SECURE")
 	region := os.Getenv("AWS_REGION")
+	
 	root, err := ioutil.TempDir("", "driver-")
 	if err != nil {
 		panic(err)
@@ -63,6 +70,8 @@ func init() {
 			rootDirectory,
 			storageClass,
 			driverName + "-test",
+			fmt.Sprint(backend),
+			endpointURL,
 		}
 
 		return New(parameters)
