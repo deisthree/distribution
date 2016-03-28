@@ -13,8 +13,6 @@
 // guarantee is that once you call Stat and receive a certain file size, that much of
 // the file is already accessible.
 //
-// +build include_gcs
-
 package gcs
 
 import (
