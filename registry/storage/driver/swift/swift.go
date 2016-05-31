@@ -280,7 +280,7 @@ func (d *driver) GetContent(ctx context.Context, path string) ([]byte, error) {
 	if err == swift.ObjectNotFound {
 		return nil, storagedriver.PathNotFoundError{Path: path}
 	}
-	return content, nil
+	return content, err
 }
 
 // PutContent stores the []byte content at a location designated by "path".
@@ -698,6 +698,9 @@ func (w *writer) Close() error {
 		if err := w.driver.createManifest(w.path, w.driver.Container+"/"+w.segmentsPath); err != nil {
 			return err
 		}
+		if err := w.waitForSegmentsToShowUp(); err != nil {
+			return err
+		}
 	}
 	w.closed = true
 
@@ -732,10 +735,14 @@ func (w *writer) Commit() error {
 	}
 
 	w.committed = true
+	return w.waitForSegmentsToShowUp()
+}
 
+func (w *writer) waitForSegmentsToShowUp() error {
 	var err error
 	waitingTime := readAfterWriteWait
 	endTime := time.Now().Add(readAfterWriteTimeout)
+
 	for {
 		var info swift.Object
 		if info, _, err = w.driver.Conn.Object(w.driver.Container, w.driver.swiftPath(w.path)); err == nil {
