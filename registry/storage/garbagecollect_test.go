@@ -23,6 +23,7 @@ type image struct {
 
 func createRegistry(t *testing.T, driver driver.StorageDriver, options ...RegistryOption) distribution.Namespace {
 	ctx := context.Background()
+	registry, err := NewRegistry(ctx, driver, EnableDelete)
 	k, err := libtrust.GenerateECP256PrivateKey()
 	if err != nil {
 		t.Fatal(err)

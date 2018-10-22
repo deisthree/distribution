@@ -67,13 +67,13 @@ type driverParameters struct {
 	client        *http.Client
 	rootDirectory string
 	chunkSize     int
-	projectID     string
 
 	// maxConcurrency limits the number of concurrent driver operations
 	// to GCS, which ultimately increases reliability of many simultaneous
 	// pushes by ensuring we aren't DoSing our own server with many
 	// connections.
 	maxConcurrency uint64
+	projectID      string
 }
 
 func init() {
@@ -211,8 +211,8 @@ func FromParameters(parameters map[string]interface{}) (storagedriver.StorageDri
 		privateKey:     jwtConf.PrivateKey,
 		client:         oauth2.NewClient(context.Background(), ts),
 		chunkSize:      chunkSize,
-		projectID:      fmt.Sprint(key.ProjectID),
 		maxConcurrency: maxConcurrency,
+		projectID:      fmt.Sprint(key.ProjectID),
 	}
 
 	return New(params)
