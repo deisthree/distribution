@@ -59,7 +59,7 @@ vet:
 fmt:
 	@echo "+ $@"
 	@test -z "$$(gofmt -s -l . 2>&1 | grep -v ^vendor/ | tee /dev/stderr)" || \
-		(echo >&2 "+ please format Go code with 'gofmt -s'" && false)
+		(echo >&2 "+ please format Go code with 'gofmt -s -w'" && false)
 
 lint:
 	@echo "+ $@"

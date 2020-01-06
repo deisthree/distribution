@@ -319,14 +319,14 @@ func (lbs *linkedBlobStore) newBlobUpload(ctx context.Context, uuid, path string
 	}
 
 	bw := &blobWriter{
-		ctx:        ctx,
-		blobStore:  lbs,
-		id:         uuid,
-		startedAt:  startedAt,
-		digester:   digest.Canonical.New(),
-		fileWriter: fw,
-		driver:     lbs.driver,
-		path:       path,
+		ctx:                    ctx,
+		blobStore:              lbs,
+		id:                     uuid,
+		startedAt:              startedAt,
+		digester:               digest.Canonical.New(),
+		fileWriter:             fw,
+		driver:                 lbs.driver,
+		path:                   path,
 		resumableDigestEnabled: lbs.resumableDigestEnabled,
 	}
 
