@@ -10,7 +10,6 @@
 // Note that the contents of incomplete uploads are not accessible even though
 // Stat returns their length
 //
-// +build include_gcs
 
 package gcs
 
@@ -39,6 +38,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/googleapi"
+	storageapi "google.golang.org/api/storage/v1"
 	"google.golang.org/cloud"
 	"google.golang.org/cloud/storage"
 )
@@ -73,6 +73,7 @@ type driverParameters struct {
 	// pushes by ensuring we aren't DoSing our own server with many
 	// connections.
 	maxConcurrency uint64
+	projectID      string
 }
 
 func init() {
@@ -148,6 +149,9 @@ func FromParameters(parameters map[string]interface{}) (storagedriver.StorageDri
 	}
 
 	var ts oauth2.TokenSource
+	var key struct {
+		ProjectID string `json:"project_id"`
+	}
 	jwtConf := new(jwt.Config)
 	if keyfile, ok := parameters["keyfile"]; ok {
 		jsonKey, err := ioutil.ReadFile(fmt.Sprint(keyfile))
@@ -156,6 +160,9 @@ func FromParameters(parameters map[string]interface{}) (storagedriver.StorageDri
 		}
 		jwtConf, err = google.JWTConfigFromJSON(jsonKey, storage.ScopeFullControl)
 		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(jsonKey, &key); err != nil {
 			return nil, err
 		}
 		ts = jwtConf.TokenSource(context.Background())
@@ -205,6 +212,7 @@ func FromParameters(parameters map[string]interface{}) (storagedriver.StorageDri
 		client:         oauth2.NewClient(context.Background(), ts),
 		chunkSize:      chunkSize,
 		maxConcurrency: maxConcurrency,
+		projectID:      fmt.Sprint(key.ProjectID),
 	}
 
 	return New(params)
@@ -219,6 +227,17 @@ func New(params driverParameters) (storagedriver.StorageDriver, error) {
 	if params.chunkSize <= 0 || params.chunkSize%minChunkSize != 0 {
 		return nil, fmt.Errorf("Invalid chunksize: %d is not a positive multiple of %d", params.chunkSize, minChunkSize)
 	}
+
+	service, err := storageapi.New(params.client)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := service.Buckets.Get(params.bucket).Do(); err != nil {
+		if _, err := service.Buckets.Insert(params.projectID, &storageapi.Bucket{Name: params.bucket}).Do(); err != nil {
+			return nil, err
+		}
+	}
+
 	d := &driver{
 		bucket:        params.bucket,
 		rootDirectory: rootDirectory,
